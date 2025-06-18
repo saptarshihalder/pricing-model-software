@@ -26,11 +26,13 @@ def load_data():
 
     # Clean currency values
     overview["Current Price"] = (
-        overview["Current Price"].astype(str).str.replace("€", "").str.replace(",", "").astype(float)
-    )
+        overview["Current Price"].astype(str).str.replace(
+            "€", "").str.replace(
+            ",", "").astype(float))
     overview["Unit Cost"] = (
-        overview["Unit Cost"].astype(str).str.replace("€", "").str.replace(",", "").astype(float)
-    )
+        overview["Unit Cost"].astype(str).str.replace(
+            "€", "").str.replace(
+            ",", "").astype(float))
 
     # Merge dataframes
     df = recommended.merge(
@@ -51,15 +53,22 @@ def load_data():
     # Parse AB P-Value properly (handle both decimal and scientific notation)
     if "AB P-Value" in df.columns:
         df["AB P-Value"] = pd.to_numeric(df["AB P-Value"], errors="coerce")
-        df["AB Significance"] = df["AB P-Value"].apply(
-            lambda x: "Significant" if pd.notna(x) and x < 0.05 else "Not Significant"
-        )
+
+        def _sig_label(val):
+            if pd.notna(val) and val < 0.05:
+                return "Significant"
+            return "Not Significant"
+
+        df["AB Significance"] = df["AB P-Value"].apply(_sig_label)
 
     return df
 
 
 def build_dashboard(df, out_path=OUT_HTML):
-    """Generate an enhanced HTML dashboard with improved visuals and metrics."""
+    """Generate an enhanced HTML dashboard.
+
+    The output includes improved visuals and metrics.
+    """
     # Calculate summary metrics
     total_profit_increase = df["Profit Delta"].sum()
     avg_price_increase = df["Price Delta %"].mean()
@@ -88,18 +97,33 @@ def build_dashboard(df, out_path=OUT_HTML):
             ),
             text=[f"€{x:.2f}" for x in df["Profit Delta"]],
             textposition="outside",
-            hovertemplate="<b>%{x}</b><br>Profit Delta: €%{y:.2f}<extra></extra>",
+            hovertemplate=(
+                "<b>%{x}</b><br>"
+                "Profit Delta: €%{y:.2f}<extra></extra>"
+            ),
         )
     )
     fig_delta.update_layout(
-        title=dict(text="Profit Delta by Product", font=dict(size=24, family="Arial")),
-        xaxis=dict(title="Products", tickangle=-45),
-        yaxis=dict(title="Profit Delta (€)", gridcolor="rgba(128,128,128,0.2)"),
+        title=dict(
+            text="Profit Delta by Product",
+            font=dict(
+                size=24,
+                family="Arial")),
+        xaxis=dict(
+            title="Products",
+            tickangle=-45),
+        yaxis=dict(
+            title="Profit Delta (€)",
+            gridcolor="rgba(128,128,128,0.2)"),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         height=500,
-        margin=dict(t=80, b=120),
-        hoverlabel=dict(bgcolor="white", font_size=14),
+        margin=dict(
+            t=80,
+            b=120),
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=14),
     )
 
     # Price comparison chart
@@ -112,7 +136,10 @@ def build_dashboard(df, out_path=OUT_HTML):
             marker=dict(color="#3498db", opacity=0.8),
             text=[f"€{x:.2f}" for x in df["Current Price"]],
             textposition="outside",
-            hovertemplate="<b>%{x}</b><br>Current: €%{y:.2f}<extra></extra>",
+            hovertemplate=(
+                "<b>%{x}</b><br>"
+                "Current: €%{y:.2f}<extra></extra>"
+            ),
         )
     )
     fig_price.add_trace(
@@ -123,19 +150,35 @@ def build_dashboard(df, out_path=OUT_HTML):
             marker=dict(color="#e74c3c", opacity=0.8),
             text=[f"€{x:.2f}" for x in df["Recommended Price"]],
             textposition="outside",
-            hovertemplate="<b>%{x}</b><br>Recommended: €%{y:.2f}<extra></extra>",
+            hovertemplate=(
+                "<b>%{x}</b><br>"
+                "Recommended: €%{y:.2f}<extra></extra>"
+            ),
         )
     )
     fig_price.update_layout(
         barmode="group",
-        title=dict(text="Current vs Recommended Prices", font=dict(size=24, family="Arial")),
-        xaxis=dict(title="Products", tickangle=-45),
-        yaxis=dict(title="Price (€)", gridcolor="rgba(128,128,128,0.2)"),
+        title=dict(
+            text="Current vs Recommended Prices",
+            font=dict(
+                size=24,
+                family="Arial")),
+        xaxis=dict(
+            title="Products",
+            tickangle=-45),
+        yaxis=dict(
+            title="Price (€)",
+            gridcolor="rgba(128,128,128,0.2)"),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         height=500,
-        margin=dict(t=80, b=120),
-        legend=dict(x=0.02, y=0.98, bgcolor="rgba(255,255,255,0.8)"),
+        margin=dict(
+            t=80,
+            b=120),
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor="rgba(255,255,255,0.8)"),
     )
 
     # Price change percentage with trend line
@@ -155,32 +198,58 @@ def build_dashboard(df, out_path=OUT_HTML):
             ),
             text=[f"{x:.1f}%" for x in df["Price Delta %"]],
             textposition="top center",
-            hovertemplate="<b>%{x}</b><br>Price Change: %{y:.1f}%<extra></extra>",
+            hovertemplate=(
+                "<b>%{x}</b><br>"
+                "Price Change: %{y:.1f}%<extra></extra>"
+            ),
         )
     )
-    fig_percentage.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+    fig_percentage.add_hline(
+        y=0,
+        line_dash="dash",
+        line_color="gray",
+        opacity=0.5)
     fig_percentage.update_layout(
-        title=dict(text="Price Change Percentage by Product", font=dict(size=24, family="Arial")),
-        xaxis=dict(title="Products", tickangle=-45),
-        yaxis=dict(title="Price Change (%)", gridcolor="rgba(128,128,128,0.2)"),
+        title=dict(
+            text="Price Change Percentage by Product",
+            font=dict(
+                size=24,
+                family="Arial")),
+        xaxis=dict(
+            title="Products",
+            tickangle=-45),
+        yaxis=dict(
+            title="Price Change (%)",
+            gridcolor="rgba(128,128,128,0.2)"),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         height=400,
-        margin=dict(t=80, b=120),
+        margin=dict(
+            t=80,
+            b=120),
     )
 
     # AB Test P-Value visualization
     if "AB P-Value" in df.columns:
         fig_pvalue = go.Figure()
-        colors = ['#27ae60' if p < 0.05 else '#e74c3c' for p in df["AB P-Value"]]
+        colors = [
+            '#27ae60' if p < 0.05 else '#e74c3c'
+            for p in df["AB P-Value"]
+        ]
         fig_pvalue.add_trace(
             go.Bar(
                 x=df["Product Name"],
                 y=-np.log10(df["AB P-Value"] + 1e-10),
                 marker=dict(color=colors, opacity=0.8),
-                text=[f"p={p:.4f}" if p > 0.0001 else f"p={p:.2e}" for p in df["AB P-Value"]],
+                text=[
+                    f"p={p:.4f}" if p > 0.0001 else f"p={p:.2e}"
+                    for p in df["AB P-Value"]
+                ],
                 textposition="outside",
-                hovertemplate="<b>%{x}</b><br>P-Value: %{text}<br>-log10(p): %{y:.2f}<extra></extra>",
+                hovertemplate=(
+                    "<b>%{x}</b><br>P-Value: %{text}<br>"
+                    "-log10(p): %{y:.2f}<extra></extra>"
+                ),
             )
         )
         fig_pvalue.add_hline(
@@ -192,25 +261,40 @@ def build_dashboard(df, out_path=OUT_HTML):
             annotation_position="top right",
         )
         fig_pvalue.update_layout(
-            title=dict(text="A/B Test Statistical Significance", font=dict(size=24, family="Arial")),
-            xaxis=dict(title="Products", tickangle=-45),
-            yaxis=dict(title="-log10(P-Value)", gridcolor="rgba(128,128,128,0.2)"),
+            title=dict(
+                text="A/B Test Statistical Significance",
+                font=dict(
+                    size=24,
+                    family="Arial")),
+            xaxis=dict(
+                title="Products",
+                tickangle=-45),
+            yaxis=dict(
+                title="-log10(P-Value)",
+                gridcolor="rgba(128,128,128,0.2)"),
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
             height=400,
-            margin=dict(t=80, b=120),
+            margin=dict(
+                t=80,
+                b=120),
         )
     else:
         fig_pvalue = None
 
     # Format table data for HTML
     table_data = df.copy()
-    for col in ["Current Price", "Recommended Price", "Price Delta", "Profit Delta"]:
+    for col in [
+        "Current Price",
+        "Recommended Price",
+        "Price Delta",
+            "Profit Delta"]:
         if col in table_data.columns:
             table_data[col] = table_data[col].apply(lambda x: f"€{x:.2f}")
 
     if "Price Delta %" in table_data.columns:
-        table_data["Price Delta %"] = table_data["Price Delta %"].apply(lambda x: f"{x:.1f}%")
+        table_data["Price Delta %"] = table_data["Price Delta %"].apply(
+            lambda x: f"{x:.1f}%")
 
     if "AB P-Value" in table_data.columns:
         table_data["AB P-Value"] = table_data["AB P-Value"].apply(
@@ -227,21 +311,31 @@ def build_dashboard(df, out_path=OUT_HTML):
     # Build HTML content
     pvalue_section = ""
     if fig_pvalue:
-        pvalue_section = f"""
-    <div class='mb-5'>
-        {fig_pvalue.to_html(full_html=False, include_plotlyjs=False, config={'displayModeBar': False})}
-    </div>
-    """
+        to_html = fig_pvalue.to_html(
+            full_html=False,
+            include_plotlyjs=False,
+            config={'displayModeBar': False},
+        )
+        pvalue_section = (
+            "<div class='mb-5'>"
+            f"{to_html}"
+            "</div>"
+        )
 
     html = f"""
 <!DOCTYPE html>
 <html lang='en'>
 <head>
     <meta charset='utf-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <meta name='viewport'
+          content='width=device-width, initial-scale=1.0'>
     <title>Dzukou Pricing Dashboard</title>
-    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'>
-    <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap' rel='stylesheet'>
+    <link rel='stylesheet'
+          href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'>
+    <link
+        href='https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;
+        600;700&display=swap'
+        rel='stylesheet'>
     <style>
         body{{
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -306,7 +400,9 @@ def build_dashboard(df, out_path=OUT_HTML):
 <div class='main-container'>
     <div class='mb-5 text-center'>
         <h1>🎯 Dzukou Pricing Dashboard</h1>
-        <p class='lead'>Data-driven pricing recommendations for optimal profitability</p>
+        <p class='lead'>
+            Data-driven pricing recommendations for optimal profitability
+        </p>
     </div>
 
     <div class='row text-center mb-5'>
@@ -324,28 +420,52 @@ def build_dashboard(df, out_path=OUT_HTML):
         </div>
         <div class='col-md-3 mb-3'>
             <div class='metric-card'>
-                <div class='metric-value'>{products_with_increase}/{len(df)}</div>
+                <div class='metric-value'>
+                    {products_with_increase}/{len(df)}
+                </div>
                 <div class='metric-label'>Products with Price Increase</div>
             </div>
         </div>
         <div class='col-md-3 mb-3'>
             <div class='metric-card'>
-                <div class='metric-value'>{significant_changes}/{len(df)}</div>
-                <div class='metric-label'>Statistically Significant Changes</div>
+                <div class='metric-value'>
+                    {significant_changes}/{len(df)}
+                </div>
+                <div class='metric-label'>
+                    Statistically Significant Changes
+                </div>
             </div>
         </div>
     </div>
 
     <div class='mb-5'>
-        {fig_delta.to_html(full_html=False, include_plotlyjs='cdn', config={'displayModeBar': False})}
+        {
+            fig_delta.to_html(
+                full_html=False,
+                include_plotlyjs='cdn',
+                config={'displayModeBar': False},
+            )
+        }
     </div>
 
     <div class='mb-5'>
-        {fig_price.to_html(full_html=False, include_plotlyjs=False, config={'displayModeBar': False})}
+        {
+            fig_price.to_html(
+                full_html=False,
+                include_plotlyjs=False,
+                config={'displayModeBar': False},
+            )
+        }
     </div>
 
     <div class='mb-5'>
-        {fig_percentage.to_html(full_html=False, include_plotlyjs=False, config={'displayModeBar': False})}
+        {
+            fig_percentage.to_html(
+                full_html=False,
+                include_plotlyjs=False,
+                config={'displayModeBar': False},
+            )
+        }
     </div>
 
     {pvalue_section}
@@ -402,7 +522,8 @@ def build_dashboard(df, out_path=OUT_HTML):
     Path(out_path).write_text(html, encoding="utf-8")
     print(f"Dashboard saved to {str(out_path)}")
     print(f"Total profit increase: €{total_profit_increase:,.2f}")
-    print(f"Products with significant changes: {significant_changes}/{len(df)}")
+    print(
+        f"Products with significant changes: {significant_changes}/{len(df)}")
 
 
 def main():

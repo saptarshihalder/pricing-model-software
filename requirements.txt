@@ -1,0 +1,7 @@
+pandas
+plotly
+requests
+beautifulsoup4
+selenium
+scikit-optimize
+scipy

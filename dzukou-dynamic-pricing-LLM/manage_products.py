@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GUI utility for adding products and keywords used by the pricing pipeline."""
+"""GUI for adding products and keywords used by the pricing pipeline."""
 import csv
 import json
 import re
@@ -8,8 +8,8 @@ from tkinter import ttk, messagebox, scrolledtext
 from pathlib import Path
 import ast
 
-from scraper import DEFAULT_CATEGORIES
-from utils import canonical_key
+from .scraper import DEFAULT_CATEGORIES
+from .utils import canonical_key
 
 BASE_DIR = Path(__file__).resolve().parent
 MAPPING_CSV = BASE_DIR / "product_data_mapping.csv"
@@ -17,6 +17,8 @@ KEYWORDS_JSON = BASE_DIR / "category_keywords.json"
 OVERVIEW_CSV = BASE_DIR / "Dzukou_Pricing_Overview_With_Names - Copy.csv"
 DATA_DIR = BASE_DIR / "product_data"
 SCRAPER_PY = BASE_DIR / "scraper.py"
+
+
 class ProductManagerGUI:
     def __init__(self, root):
         self.root = root
@@ -33,51 +35,118 @@ class ProductManagerGUI:
         root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
 
-        title_label = ttk.Label(main_frame, text="Add Product to Pricing Pipeline", style='Title.TLabel')
+        title_label = ttk.Label(
+            main_frame,
+            text="Add Product to Pricing Pipeline",
+            style='Title.TLabel')
         title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
-        ttk.Label(main_frame, text="Product Name:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        ttk.Label(
+            main_frame,
+            text="Product Name:").grid(
+            row=1,
+            column=0,
+            sticky=tk.W,
+            pady=5)
         self.name_entry = ttk.Entry(main_frame, width=40)
         self.name_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=5)
 
-        ttk.Label(main_frame, text="Product ID:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        ttk.Label(
+            main_frame,
+            text="Product ID:").grid(
+            row=2,
+            column=0,
+            sticky=tk.W,
+            pady=5)
         self.id_entry = ttk.Entry(main_frame, width=40)
         self.id_entry.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=5)
 
-        ttk.Label(main_frame, text="Category:").grid(row=3, column=0, sticky=tk.W, pady=5)
+        ttk.Label(
+            main_frame,
+            text="Category:").grid(
+            row=3,
+            column=0,
+            sticky=tk.W,
+            pady=5)
         self.category_entry = ttk.Entry(main_frame, width=40)
         self.category_entry.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=5)
 
-        ttk.Label(main_frame, text="Current Price:").grid(row=4, column=0, sticky=tk.W, pady=5)
+        ttk.Label(
+            main_frame,
+            text="Current Price:").grid(
+            row=4,
+            column=0,
+            sticky=tk.W,
+            pady=5)
         self.price_entry = ttk.Entry(main_frame, width=40)
         self.price_entry.grid(row=4, column=1, sticky=(tk.W, tk.E), pady=5)
 
-        ttk.Label(main_frame, text="Unit Cost:").grid(row=5, column=0, sticky=tk.W, pady=5)
+        ttk.Label(
+            main_frame,
+            text="Unit Cost:").grid(
+            row=5,
+            column=0,
+            sticky=tk.W,
+            pady=5)
         self.cost_entry = ttk.Entry(main_frame, width=40)
         self.cost_entry.grid(row=5, column=1, sticky=(tk.W, tk.E), pady=5)
 
-        ttk.Label(main_frame, text="Keywords:").grid(row=6, column=0, sticky=(tk.W, tk.N), pady=5)
+        ttk.Label(
+            main_frame,
+            text="Keywords:").grid(
+            row=6,
+            column=0,
+            sticky=(
+                tk.W,
+                tk.N),
+            pady=5)
         keywords_frame = ttk.Frame(main_frame)
         keywords_frame.grid(row=6, column=1, sticky=(tk.W, tk.E), pady=5)
 
         self.keywords_entry = ttk.Entry(keywords_frame, width=40)
         self.keywords_entry.grid(row=0, column=0, sticky=(tk.W, tk.E))
 
-        ttk.Label(keywords_frame, text="(comma-separated)", font=('Arial', 9, 'italic')).grid(row=1, column=0, sticky=tk.W)
+        ttk.Label(
+            keywords_frame,
+            text="(comma-separated)",
+            font=(
+                'Arial',
+                9,
+                'italic')).grid(
+            row=1,
+            column=0,
+            sticky=tk.W)
         keywords_frame.columnconfigure(0, weight=1)
 
-        self.add_button = ttk.Button(main_frame, text="Add Product", command=self.add_product)
+        self.add_button = ttk.Button(
+            main_frame,
+            text="Add Product",
+            command=self.add_product)
         self.add_button.grid(row=7, column=0, columnspan=2, pady=20)
 
-        ttk.Label(main_frame, text="Output:").grid(row=8, column=0, sticky=(tk.W, tk.N), pady=5)
-        self.output_text = scrolledtext.ScrolledText(main_frame, height=8, width=50)
-        self.output_text.grid(row=8, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        ttk.Label(
+            main_frame,
+            text="Output:").grid(
+            row=8,
+            column=0,
+            sticky=(
+                tk.W,
+                tk.N),
+            pady=5)
+        self.output_text = scrolledtext.ScrolledText(
+            main_frame, height=8, width=50)
+        self.output_text.grid(
+            row=8, column=1, sticky=(
+                tk.W, tk.E, tk.N, tk.S), pady=5)
 
         main_frame.rowconfigure(8, weight=1)
 
         self.status_var = tk.StringVar()
         self.status_var.set("Ready to add products")
-        status_bar = ttk.Label(root, textvariable=self.status_var, relief=tk.SUNKEN)
+        status_bar = ttk.Label(
+            root,
+            textvariable=self.status_var,
+            relief=tk.SUNKEN)
         status_bar.grid(row=1, column=0, sticky=(tk.W, tk.E))
 
         self.update_status()
@@ -106,13 +175,21 @@ class ProductManagerGUI:
         with open(KEYWORDS_JSON, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
-    def update_scraper_categories(self, category: str, keywords: list, csv_filename: str):
+    def update_scraper_categories(
+            self,
+            category: str,
+            keywords: list,
+            csv_filename: str):
         """Update the DEFAULT_CATEGORIES in scraper.py file."""
         try:
             # Read the current scraper.py file
             if not SCRAPER_PY.exists():
                 messagebox.showwarning(
-                    "Warning", "scraper.py file not found. Cannot update DEFAULT_CATEGORIES."
+                    "Warning",
+                    (
+                        "scraper.py file not found. "
+                        "Cannot update DEFAULT_CATEGORIES."
+                    ),
                 )
                 return False
 
@@ -146,12 +223,14 @@ class ProductManagerGUI:
                 for term in cat_data["search_terms"]:
                     new_dict_str += f'            "{term}",\n'
                 new_dict_str += "        ],\n"
-                new_dict_str += f'        "csv_filename": "{cat_data["csv_filename"]}",\n'
+                new_dict_str += f'        "csv_filename": "{
+                    cat_data["csv_filename"]}",\n'
                 new_dict_str += "    },\n"
             new_dict_str += "}"
 
             # Replace the old dictionary with the new one
-            new_content = content[: match.start()] + new_dict_str + content[match.end() :]
+            new_content = content[: match.start()] + \
+                new_dict_str + content[match.end():]
 
             # Write back to the file
             with open(SCRAPER_PY, "w", encoding="utf-8") as f:
@@ -160,7 +239,10 @@ class ProductManagerGUI:
             return True
 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to update scraper.py: {str(e)}")
+            messagebox.showerror(
+                "Error",
+                f"Failed to update scraper.py: {
+                    str(e)}")
             return False
 
     def add_product(self):
@@ -210,12 +292,22 @@ class ProductManagerGUI:
             file_name = self.sanitize_filename(category)
             data_file = DATA_DIR / file_name
             if not data_file.exists():
-                data_file.write_text("category,store,product_name,price,search_term,store_url\n")
+                data_file.write_text(
+                    "category,store,product_name,price,"
+                    "search_term,store_url\n"
+                )
 
-            mapping.append({"Product Name": name, "Product ID": prod_id, "Data File": str(data_file)})
+            mapping.append({"Product Name": name,
+                            "Product ID": prod_id,
+                            "Data File": str(data_file)})
 
             with open(MAPPING_CSV, "w", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=["Product Name", "Product ID", "Data File"])
+                writer = csv.DictWriter(
+                    f,
+                    fieldnames=[
+                        "Product Name",
+                        "Product ID",
+                        "Data File"])
                 writer.writeheader()
                 writer.writerows(mapping)
 
@@ -235,7 +327,11 @@ class ProductManagerGUI:
             with open(OVERVIEW_CSV, "w", newline="", encoding="cp1252") as f:
                 writer = csv.DictWriter(
                     f,
-                    fieldnames=["Product Name", "Product ID", " Current Price ", " Unit Cost "],
+                    fieldnames=[
+                        "Product Name",
+                        "Product ID",
+                        " Current Price ",
+                        " Unit Cost "],
                 )
                 writer.writeheader()
                 writer.writerows(overview_rows)
@@ -248,15 +344,24 @@ class ProductManagerGUI:
             self.save_keywords(kw_data)
 
             # Update scraper.py with the new category
-            scraper_updated = self.update_scraper_categories(category, keywords, file_name)
+            scraper_updated = self.update_scraper_categories(
+                category, keywords, file_name)
 
-            output_msg = f"Added product '{name}' with data file {str(data_file)}\n"
+            output_msg = f"Added product '{name}' with data file {
+                str(data_file)}\n"
             if category != category_input:
-                output_msg += f"Category mapped to existing '{category}'.\n"
+                output_msg += (
+                    f"Category mapped to existing '{category}'.\n"
+                )
             if keywords:
-                output_msg += f"Keywords added to category '{category}': {', '.join(keywords)}\n"
+                joined = ', '.join(keywords)
+                output_msg += (
+                    f"Keywords added to category '{category}': {joined}\n"
+                )
             if scraper_updated:
-                output_msg += f"Updated scraper.py with category '{category}'\n"
+                output_msg += (
+                    f"Updated scraper.py with category '{category}'\n"
+                )
             output_msg += "-" * 50 + "\n"
 
             self.output_text.insert(tk.END, output_msg)
@@ -288,7 +393,9 @@ class ProductManagerGUI:
                 kw_data = self.load_keywords()
                 category_count = len(kw_data)
 
-            status = f"Products: {product_count} | Categories: {category_count}"
+            status = (
+                f"Products: {product_count} | Categories: {category_count}"
+            )
             self.root.after(100, lambda: self.status_var.set(status))
         except Exception:
             pass

@@ -23,6 +23,8 @@ PRICE_STEP = 0.25  # granularity for optimizer
 # Cap ratio relative to the mean competitor price. This is calculated
 # dynamically from competitor price dispersion so recommendations stay
 # competitive in diverse markets.
+
+
 def compute_mean_cap(avg: float, stdev: float, max_cap: float = 1.3) -> float:
     """Return a limit for how far above the mean a price may go."""
     if avg <= 0:
@@ -201,9 +203,6 @@ def bayesian_optimize_price(
     return round_price(best_price)
 
 
-
-
-
 OVERVIEW_CSV = BASE_DIR / "Dzukou_Pricing_Overview_With_Names - Copy.csv"
 MAPPING_CSV = BASE_DIR / "product_data_mapping.csv"
 
@@ -324,6 +323,7 @@ def round_price(price: float) -> float:
     # alternate between .49 and .99 for lower price points
     return rounded - 0.01
 
+
 # Default keywords used if no external mapping file is present. The
 # mapping associates categories with words that identify products in that
 # category. ``manage_products.py`` can update ``category_keywords.json`` to
@@ -405,7 +405,8 @@ def read_prices(csv_path: Path, category: str | None = None) -> List[float]:
             if keywords:
                 name_field = (row.get("product_name") or "").lower()
                 term_field = (row.get("search_term") or "").lower()
-                if not any(k in name_field or k in term_field for k in keywords):
+                if not any(
+                        k in name_field or k in term_field for k in keywords):
                     continue
 
             price = row.get("price") or row.get("Price")
@@ -421,10 +422,14 @@ def read_prices(csv_path: Path, category: str | None = None) -> List[float]:
     return clean_prices(prices)
 
 
-def fallback_price(avg: float, min_p: float, cur: float, unit: float, margin: float) -> float:
+def fallback_price(
+        avg: float,
+        min_p: float,
+        cur: float,
+        unit: float,
+        margin: float) -> float:
     base = unit * (1 + margin)
     return max(base, cur * 1.05, avg, min_p * 1.1)
-
 
 
 def simulate_profit(
@@ -478,8 +483,10 @@ def run_ab_test(
     profits_control = []
     profits_test = []
     for _ in range(n):
-        base_a = demand_base * saturation / (1 + (current_price / max(avg_competitor, 0.01)) ** elasticity)
-        base_b = demand_base * saturation / (1 + (new_price / max(avg_competitor, 0.01)) ** elasticity)
+        base_a = demand_base * saturation / \
+            (1 + (current_price / max(avg_competitor, 0.01)) ** elasticity)
+        base_b = demand_base * saturation / \
+            (1 + (new_price / max(avg_competitor, 0.01)) ** elasticity)
         demand_a = base_a * max(0.0, random.gauss(1.0, noise))
         demand_b = base_b * max(0.0, random.gauss(1.0, noise))
         profits_control.append(demand_a * (current_price - unit_cost))
@@ -487,15 +494,14 @@ def run_ab_test(
 
     mean_a = statistics.mean(profits_control)
     mean_b = statistics.mean(profits_test)
-    stat, p_value = stats.ttest_ind(profits_test, profits_control, equal_var=False)
+    stat, p_value = stats.ttest_ind(
+        profits_test, profits_control, equal_var=False)
     return {
         "profit_control": mean_a,
         "profit_test": mean_b,
         "profit_delta": mean_b - mean_a,
         "p_value": float(p_value),
     }
-
-
 
 
 def suggest_price(
@@ -554,7 +560,8 @@ def main():
                 info["unit_cost"],
             )
             avg = statistics.mean(prices) if prices else info["current_price"]
-            median = statistics.median(prices) if prices else info["current_price"]
+            median = statistics.median(
+                prices) if prices else info["current_price"]
             stdev = statistics.stdev(prices) if len(prices) > 1 else 0.0
             min_p = min(prices) if prices else info["current_price"]
             max_p = max(prices) if prices else info["current_price"]
@@ -636,8 +643,12 @@ def main():
         writer.writerows(results)
     print(f"Saved {len(results)} recommendations to {str(out_path)}")
     print(
-        f"Total estimated profit now: {total_current:.2f} -> {total_recommended:.2f} (delta {(total_recommended-total_current):.2f})"
-    )
+        f"Total estimated profit now: {
+            total_current:.2f} -> {
+            total_recommended:.2f} (delta {
+                (
+                    total_recommended -
+                    total_current):.2f})")
 
 
 if __name__ == "__main__":

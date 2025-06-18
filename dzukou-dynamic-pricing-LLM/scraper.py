@@ -16,7 +16,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from utils import canonical_key
+from .utils import canonical_key
 
 BASE_DIR = Path(__file__).resolve().parent
 KEYWORDS_JSON = BASE_DIR / "category_keywords.json"
@@ -157,14 +157,28 @@ class ProductScraper:
     def __init__(self) -> None:
         self.session = requests.Session()
         self.user_agents = [
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+            (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) "
+                "Gecko/20100101 Firefox/121.0"
+            ),
         ]
         self.session.headers.update(
             {
                 "User-Agent": random.choice(self.user_agents),
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept": (
+                    "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                    "image/webp,*/*;q=0.8"
+                ),
                 "Accept-Language": "en-US,en;q=0.5",
             }
         )
@@ -173,21 +187,34 @@ class ProductScraper:
         self.chrome_options.add_argument("--no-sandbox")
         self.chrome_options.add_argument("--disable-dev-shm-usage")
         self.chrome_options.add_argument("--disable-gpu")
-        self.chrome_options.add_argument(f"--user-agent={random.choice(self.user_agents)}")
+        self.chrome_options.add_argument(
+            f"--user-agent={random.choice(self.user_agents)}")
 
         self.stores = {
-            "Made Trade": {"url": "https://www.madetrade.com", "search_pattern": "/search?q={}"},
-            "EarthHero": {"url": "https://earthhero.com", "search_pattern": "/search?q={}"},
-            "Package Free Shop": {"url": "https://packagefreeshop.com", "search_pattern": "/search?q={}"},
-            "Ten Thousand Villages": {"url": "https://www.tenthousandvillages.com", "search_pattern": "/search?q={}"},
-            "Zero Waste Store": {"url": "https://zerowastestoreonline.com", "search_pattern": "/search?q={}"},
+            "Made Trade": {
+                "url": "https://www.madetrade.com",
+                "search_pattern": "/search?q={}"},
+            "EarthHero": {
+                "url": "https://earthhero.com",
+                "search_pattern": "/search?q={}"},
+            "Package Free Shop": {
+                "url": "https://packagefreeshop.com",
+                "search_pattern": "/search?q={}"},
+            "Ten Thousand Villages": {
+                "url": "https://www.tenthousandvillages.com",
+                "search_pattern": "/search?q={}"},
+            "Zero Waste Store": {
+                "url": "https://zerowastestoreonline.com",
+                "search_pattern": "/search?q={}"},
         }
 
         self.product_categories = self.load_categories()
 
         self.csv_dir = DATA_DIR
         self.csv_dir.mkdir(exist_ok=True)
-        self.results_by_category = {cat: [] for cat in self.product_categories}
+        self.results_by_category = {
+            cat: [] for cat in self.product_categories
+        }
 
     def load_categories(self):
         """Return merged categories from defaults and keywords."""
@@ -198,7 +225,9 @@ class ProductScraper:
             merged[canonical_key(cat)] = {
                 "name": cat,
                 "search_terms": list(info.get("search_terms", [])),
-                "csv_filename": info.get("csv_filename", sanitize_filename(cat)),
+                "csv_filename": info.get(
+                    "csv_filename", sanitize_filename(cat)
+                ),
             }
 
         if KEYWORDS_JSON.exists():
@@ -261,7 +290,8 @@ class ProductScraper:
                     parent = parent.parent
             if not parent:
                 continue
-            name_elems = parent.find_all(["h1", "h2", "h3", "h4", "a", "span", "div"])
+            name_elems = parent.find_all(
+                ["h1", "h2", "h3", "h4", "a", "span", "div"])
             product_name = None
             for elem in name_elems:
                 text = elem.get_text(strip=True)
@@ -273,15 +303,23 @@ class ProductScraper:
                 continue
             price = self.clean_price(price_elem)
             if product_name and price and price > 0:
-                products.append({"name": product_name, "price": price, "search_term": search_term})
+                products.append(
+                    {
+                        "name": product_name,
+                        "price": price,
+                        "search_term": search_term,
+                    }
+                )
         return products
 
     def scrape_with_requests(self, store_name, store_cfg, term):
         products = []
         try:
-            url = store_cfg["url"] + store_cfg["search_pattern"].format(quote(term))
+            url = store_cfg["url"] + \
+                store_cfg["search_pattern"].format(quote(term))
             logger.info("Requesting: %s", url)
-            self.session.headers["User-Agent"] = random.choice(self.user_agents)
+            self.session.headers["User-Agent"] = random.choice(
+                self.user_agents)
             resp = self.session.get(url, timeout=10)
             if resp.status_code == 200:
                 products = self.extract_products_from_html(resp.content, term)
@@ -295,13 +333,19 @@ class ProductScraper:
         driver = None
         try:
             driver = webdriver.Chrome(options=self.chrome_options)
-            url = store_cfg["url"] + store_cfg["search_pattern"].format(quote(term))
+            url = store_cfg["url"] + \
+                store_cfg["search_pattern"].format(quote(term))
             logger.info("Selenium visiting: %s", url)
             driver.get(url)
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight/2);")
+            WebDriverWait(
+                driver, 10).until(
+                EC.presence_of_element_located(
+                    (By.TAG_NAME, "body")))
+            driver.execute_script(
+                "window.scrollTo(0, document.body.scrollHeight/2);")
             time.sleep(1)
-            elems = driver.find_elements(By.XPATH, "//*[contains(text(), '$')]")
+            elems = driver.find_elements(
+                By.XPATH, "//*[contains(text(), '$')]")
             for elem in elems[:30]:
                 parent = elem
                 for _ in range(3):
@@ -312,7 +356,10 @@ class ProductScraper:
                             break
                 if not parent:
                     continue
-                name_elems = parent.find_elements(By.CSS_SELECTOR, "h1, h2, h3, h4, a, .title, .name, span")
+                name_elems = parent.find_elements(
+                    By.CSS_SELECTOR,
+                    "h1, h2, h3, h4, a, .title, .name, span",
+                )
                 product_name = None
                 for nm in name_elems:
                     text = nm.text.strip()
@@ -324,7 +371,13 @@ class ProductScraper:
                     continue
                 price = self.clean_price(elem.text)
                 if product_name and price and price > 0:
-                    products.append({"name": product_name, "price": price, "search_term": term})
+                    products.append(
+                        {
+                            "name": product_name,
+                            "price": price,
+                            "search_term": term,
+                        }
+                    )
         except Exception as exc:
             logger.error("Error with Selenium: %s", exc)
         finally:
@@ -339,7 +392,8 @@ class ProductScraper:
             logger.info("Searching for '%s' in %s", term, store_name)
             products = self.scrape_with_requests(store_name, store_cfg, term)
             if not products:
-                products = self.scrape_with_selenium(store_name, store_cfg, term)
+                products = self.scrape_with_selenium(
+                    store_name, store_cfg, term)
             if products:
                 all_products.extend(products)
             time.sleep(random.uniform(1, 2))
@@ -364,7 +418,8 @@ class ProductScraper:
             for store_name, store_cfg in self.stores.items():
                 logger.info("Checking %s...", store_name)
                 try:
-                    products = self.scrape_store(store_name, store_cfg, category, terms)
+                    products = self.scrape_store(
+                        store_name, store_cfg, category, terms)
                     for product in products:
                         self.results_by_category[category].append(
                             {
@@ -379,7 +434,11 @@ class ProductScraper:
                 except requests.exceptions.RequestException as exc:
                     logger.error("Network error with %s: %s", store_name, exc)
                 except Exception as exc:
-                    logger.error("Error scraping %s for %s: %s", store_name, category, exc)
+                    logger.error(
+                        "Error scraping %s for %s: %s",
+                        store_name,
+                        category,
+                        exc)
                 time.sleep(random.uniform(1.5, 3.0))
 
     def save_category_csvs(self):
@@ -392,7 +451,16 @@ class ProductScraper:
                 df.to_csv(path, index=False)
                 logger.info("Saved %d products to %s", len(df), str(path))
             else:
-                pd.DataFrame(columns=["category", "store", "product_name", "price", "search_term", "store_url"]).to_csv(path, index=False)
+                pd.DataFrame(
+                    columns=[
+                        "category",
+                        "store",
+                        "product_name",
+                        "price",
+                        "search_term",
+                        "store_url"]).to_csv(
+                    path,
+                    index=False)
                 logger.info("Created empty file: %s", str(path))
             saved.append(path)
         print("\nCategory files created:")
@@ -405,8 +473,11 @@ class ProductScraper:
 def main():
     scraper = ProductScraper()
     print(
-        "Starting Category-Specific Product Scraper\n"
-        f"Searching {len(scraper.product_categories)} product categories across {len(scraper.stores)} stores\n"
+        "Starting Category-Specific Product Scraper\n",
+        (
+            f"Searching {len(scraper.product_categories)} product "
+            f"categories across {len(scraper.stores)} stores\n"
+        ),
     )
     for cat, info in scraper.product_categories.items():
         print(f"  • {cat}: {info['csv_filename']}")
