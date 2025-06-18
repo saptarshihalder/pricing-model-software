@@ -1,0 +1,34 @@
+{
+  "Sunglasses": [
+    "sunglasses"
+  ],
+  "Bottles": [
+    "bottle"
+  ],
+  "Coffee mugs": [
+    "mug"
+  ],
+  "Phone accessories": [
+    "phone"
+  ],
+  "Notebook": [
+    "notebook"
+  ],
+  "Lunchbox": [
+    "lunchbox"
+  ],
+  "Premium shawls": [
+    "premium shawl"
+  ],
+  "Eri silk shawls": [
+    "eri silk"
+  ],
+  "Cotton scarf": [
+    "cotton scarf"
+  ],
+  "Other scarves and shawls": [
+    "stole",
+    "shawl",
+    "scarf"
+  ]
+}
