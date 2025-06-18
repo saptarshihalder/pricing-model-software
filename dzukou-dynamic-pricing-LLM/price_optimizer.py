@@ -2,8 +2,6 @@
 """Price optimizer for Dzukou products."""
 
 import csv
-import os
-import re
 import statistics
 import json
 import random
@@ -203,10 +201,7 @@ def bayesian_optimize_price(
     return round_price(best_price)
 
 
-try:
-    import requests
-except ImportError:  # requests might not be installed; LLM calls become optional
-    requests = None
+
 
 
 OVERVIEW_CSV = BASE_DIR / "Dzukou_Pricing_Overview_With_Names - Copy.csv"
@@ -431,80 +426,6 @@ def fallback_price(avg: float, min_p: float, cur: float, unit: float, margin: fl
     return max(base, cur * 1.05, avg, min_p * 1.1)
 
 
-def call_mistral(prompt: str) -> float:
-    """Query the Mistral API and extract a numeric price from the response."""
-    if requests is None:
-        raise RuntimeError("requests package not installed")
-    api_key = os.environ.get("MISTRAL_API_KEY")
-    if not api_key:
-        raise RuntimeError("MISTRAL_API_KEY environment variable not set")
-    url = "https://api.mistral.ai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-    data = {
-        "model": "mistral-large-latest",
-        "messages": [{"role": "user", "content": prompt}],
-    }
-    resp = requests.post(url, headers=headers, json=data, timeout=10)
-    resp.raise_for_status()
-    content = resp.json()["choices"][0]["message"]["content"]
-    match = re.search(r"\d+(?:\.\d+)?", content)
-    if not match:
-        raise ValueError("No numeric price returned")
-    return float(match.group())
-
-
-def call_groq(prompt: str, model: str | None = None) -> float:
-    """Use Groq API to get a numeric price recommendation."""
-    if requests is None:
-        raise RuntimeError("requests package not installed")
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        raise RuntimeError("GROQ_API_KEY environment variable not set")
-    if not model:
-        model = os.environ.get("GROQ_MODEL", "mixtral-8x7b-32768")
-    url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    data = {"model": model, "messages": [{"role": "user", "content": prompt}]}
-    resp = requests.post(url, headers=headers, json=data, timeout=10)
-    resp.raise_for_status()
-    content = resp.json()["choices"][0]["message"]["content"]
-    match = re.search(r"\d+(?:\.\d+)?", content)
-    if not match:
-        raise ValueError("No numeric price returned")
-    return float(match.group())
-
-
-def call_gemini(prompt: str) -> float:
-    """Use Google's Gemini API to get a numeric price recommendation."""
-    if requests is None:
-        raise RuntimeError("requests package not installed")
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY environment variable not set")
-    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro-002:generateContent?key={api_key}"
-    headers = {"Content-Type": "application/json"}
-    data = {"contents": [{"role": "user", "parts": [{"text": prompt}]}]}
-    resp = requests.post(url, headers=headers, json=data, timeout=10)
-    resp.raise_for_status()
-    content = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-    match = re.search(r"\d+(?:\.\d+)?", content)
-    if not match:
-        raise ValueError("No numeric price returned")
-    return float(match.group())
-
-
-def call_llm(prompt: str) -> float:
-    """Try multiple LLM providers and return the first successful price."""
-    for func in (call_mistral, call_groq, call_gemini):
-        try:
-            return func(prompt)
-        except Exception:
-            continue
-    raise RuntimeError("No LLM API available")
-
 
 def simulate_profit(
     price: float,
@@ -594,46 +515,19 @@ def suggest_price(
         return round_price(max(unit * (1 + margin), cur))
 
     avg = statistics.mean(prices)
-    median = statistics.median(prices)
     stdev = statistics.stdev(prices) if len(prices) > 1 else 0.0
-    min_p = min(prices)
-    max_p = max(prices)
-    prompt = (
-        f"Product: {product_name}\n"
-        f"Category: {category}\n"
-        f"Competitor prices: {', '.join(f'{p:.2f}' for p in prices)}\n"
-        f"Average price: {avg:.2f}\n"
-        f"Median price: {median:.2f}\n"
-        f"Std Dev: {stdev:.2f}\n"
-        f"Min price: {min_p:.2f}\n"
-        f"Max price: {max_p:.2f}\n"
-        f"Current price: {cur:.2f}\n"
-        f"Unit cost: {unit:.2f}\n"
-        f"Required margin: {margin*100:.0f}%\n"
-        "Recommend a competitive selling price that maximizes profit. "
-        "Only respond with the number."
+    price = bayesian_optimize_price(
+        prices,
+        cur,
+        unit,
+        margin,
+        elasticity=elasticity,
+        max_markup=max_markup,
+        max_increase=max_increase,
+        max_decrease=max_decrease,
+        saturation=DEMAND_SATURATION.get(category, 1.0),
+        mean_cap_ratio=compute_mean_cap(avg, stdev),
     )
-    try:
-        price = call_llm(prompt)
-    except Exception:
-        price = bayesian_optimize_price(
-            prices,
-            cur,
-            unit,
-            margin,
-            elasticity=elasticity,
-            max_markup=max_markup,
-            max_increase=max_increase,
-            max_decrease=max_decrease,
-            saturation=DEMAND_SATURATION.get(category, 1.0),
-            mean_cap_ratio=compute_mean_cap(avg, stdev),
-        )
-    else:
-        base = unit * (1 + margin)
-        price = max(price, base)
-        price = min(price, cur * (1 + max_increase))
-        price = max(price, cur * (1 - max_decrease))
-        price = min(price, avg * compute_mean_cap(avg, stdev))
     return round_price(price)
 
 
