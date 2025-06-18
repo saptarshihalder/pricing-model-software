@@ -6,7 +6,7 @@ This project provides a lightweight workflow for analysing competitor prices and
 
 - `manage_products.py` – GUI tool to register products and category keywords. It updates the overview CSV and maintains a mapping between products and their competitor data files.
 - `scraper.py` – searches a set of sustainable shops for products related to each category and saves the prices in CSV files inside the `product_data/` directory.
-- `price_optimizer.py` – processes the scraped prices together with the current price and unit cost of each product to suggest a new selling price. It can optionally call various LLM APIs for additional suggestions.
+- `price_optimizer.py` – processes the scraped prices together with the current price and unit cost of each product to suggest a new selling price.
 - `dashboard.py` – builds an interactive HTML dashboard showing the recommended prices, expected profit changes and basic A/B test metrics.
 - Data files:
   - `Dzukou_Pricing_Overview_With_Names - Copy.csv` – summary of the product catalogue with current prices and unit costs.
@@ -26,13 +26,6 @@ pip install pandas plotly requests scikit-optimize selenium beautifulsoup4
 
 `scikit-optimize` is optional. If it is not installed the optimiser falls back to a grid search strategy.
 
-To use the LLM based pricing suggestion functions you also need valid API keys in the following environment variables:
-
-- `MISTRAL_API_KEY` for the Mistral API
-- `GROQ_API_KEY` for the Groq API (model can be configured with `GROQ_MODEL`)
-- `GEMINI_API_KEY` for Google Gemini
-
-The optimizer will try each API in the above order until one succeeds.
 
 ## Tutorial
 
