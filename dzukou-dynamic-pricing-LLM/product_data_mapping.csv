@@ -1,0 +1,13 @@
+Product Name,Product ID,Data File
+Reiek Peak Wooden Sunglasses (Incl. cork casing),SG0001,product_data/wooden_sunglasses.csv
+Fibonacci Wooden Sunglasses (Incl. cork casing),SG0002,product_data/wooden_sunglasses.csv
+Elephant Falls Thermos Bottle,BT0005,product_data/thermos_bottles.csv
+Saint Elias Thermos bottles,BT0012-13,product_data/thermos_bottles.csv
+Inca Trail Coffee Mugs,BT0015-16,product_data/coffee_mugs.csv
+Woodland Mouse Phone Stand,PS0007,product_data/phone_stand.csv
+Tiger Trail Notebooks,NB0011-12,product_data/notebooks.csv
+Papillon Notebooks,NB0013-15,product_data/notebooks.csv
+Jim Corbett Lunchbox Band 1200ML,LB0017,product_data/lunch_box_1200ml.csv
+Jim Corbett Lunchbox Band 800ML,LB0019,product_data/lunch_box_800ml.csv
+Timeless Silk Colored Stole,SH0017-26,product_data/silk_colored_stole.csv
+Silk Uncut White Stole,SH0025,product_data/white_silk_stole.csv
